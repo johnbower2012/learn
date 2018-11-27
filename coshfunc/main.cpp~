@@ -35,8 +35,8 @@ int main(int argc, char* argv[]){
   int 
     n=100000;
 
-  n=10;
-  x=5;
+  n=1000;
+  x=50;
   Eigen::MatrixXd M;
   dist.Functions(n,x,M);
   ofile.open("wave.dat");

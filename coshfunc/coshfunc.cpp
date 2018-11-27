@@ -93,7 +93,7 @@ void CDistCosh::GenX(int ab, double &x, double &weight){
     Z += coshcalc.Z(n)*g[ab][n];
   }
   //weight /= Z;
-  weight=weight/(coshcalc->GetG(0,x)*g[ab][0]);
+  weight=weight/(coshcalc.GetG(0,x)*g[ab][0]);
   x*=width[ab];
 }
 void CDistCosh::Functions(int n, double x, Eigen::MatrixXd &M){

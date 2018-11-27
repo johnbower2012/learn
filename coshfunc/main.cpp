@@ -5,8 +5,6 @@
 
 std::ofstream ofile;
 
-
-
 int main(int argc, char* argv[]){
   int ab=4;
   int nmax=10;

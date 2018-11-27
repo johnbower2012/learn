@@ -1,0 +1,12 @@
+This     is a line in a text file.
+This is a funky line.
+#This is    a comment
+     divided     over
+     	          many lines.
+#This is a comment
+	     	  Let's see how it handles
+tabs.
+testline
+1 2  3   4          5
+3.7 2.3  8.5
+
