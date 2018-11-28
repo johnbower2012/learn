@@ -6,6 +6,7 @@
 #include "system.h"
 #include "analysis.h"
 #include "coshfunc.h"
+#include "emulator.h"
 
 int main(int argc, char* argv[]){
   std::vector<std::string> modelfilenames={"I211_J211.dat","I2212_J2212.dat","I321_J2212.dat","I321_J321.dat"},
@@ -21,6 +22,8 @@ int main(int argc, char* argv[]){
   int start=atoi(argv[1]),
     finish=atoi(argv[2]),
     column=1,
+    parameters,
+    observables,
     ab=4,
     n=500,
     nmax=4,
@@ -42,6 +45,7 @@ int main(int argc, char* argv[]){
 
   //Write Parameters files
   WriteParameterFiles(rangename, foldername, writefilename, delimiter, start, finish, ab,Parameters);
+  parameters = Parameters.rows();
   WriteFile(infilename,Parameters,delimiter);
 
   //Construct gab functions
@@ -68,6 +72,7 @@ int main(int argc, char* argv[]){
 
   LoadDataFiles(foldername, modelfilenames, delimiter, start, finish, column, ModelMatrix);
   LoadDataFiles(foldername, expfilenames, delimiter, 0, 1, column, ExpMatrix);
+
   MatrixMoments(ModelMatrix,modeldy,ModelObs);
   MatrixMoments(ExpMatrix,expdy,ExpObs);
   Error = er*ExpObs.col(0);
@@ -81,7 +86,7 @@ int main(int argc, char* argv[]){
   EigenSort(EigenValues,EigenVectors);
   ModelZ = ModelObs.transpose()*EigenVectors;
   ExpZ = ExpObs.transpose()*EigenVectors;
-
+  observables = ModelZ.cols();
   //std::cout << "Parameters:\n" << Parameters << std::endl;  
   //std::cout << "ModelObs:\n" << ModelObs << std::endl;
   //std::cout << "ExpObs:\n" << ExpObs << std::endl;
@@ -95,8 +100,34 @@ int main(int argc, char* argv[]){
   //std::cout << "----------------\n" << std::endl;
   //std::cout << "ModelZ:\n" << ModelZ << std::endl;
   AverageColumns(Mean,ModelZ);
-  //std::cout << "MMean:\n" << Mean.transpose() << std::endl;
-  //std::cout << "ExpZ:\n" << ExpZ << std::endl;
+  std::cout << "MMean:\n" << Mean.transpose() << std::endl;
+  std::cout << "ExpZ:\n" << ExpZ << std::endl;
 
+  Eigen::MatrixXd Beta,
+    Hyperparameters,
+    testX(1,parameters),
+    outMatrix,
+    plot(finish-start,34);
+  std::cout << Parameters.rows() << " " << Parameters.cols() << std::endl;
+  std::cout << ModelZ.rows() << " " << ModelZ.cols() << std::endl;
+  std::cout << plot.rows() << " " << plot.cols() << std::endl;
+  for(int i=0;i<finish-start;i++){
+    for(int j=0;j<parameters;j++){
+      plot(i,j) = Parameters(i,j);
+    }
+    for(int j=0;j<observables;j++){
+      plot(i,j+parameters) = ModelZ(i,j);
+    }
+  }
+  WriteFile("plot.dat",plot," ");
+
+  LoadFile("hyperparameters.dat",Hyperparameters," ");
+  linearRegressionLeastSquares(ModelZ,Parameters,Beta);
+  WriteFile("beta.dat",Beta," ");
+
+  testX.row(0) = Parameters.row(0);
+  emulator emulation(Parameters, Hyperparameters, Beta);
+  emulation.Emulate(testX,ModelZ,outMatrix);
+  std::cout << outMatrix << std::endl;
   return 0;
 }

@@ -186,3 +186,21 @@ void MatrixMoments(std::vector<Eigen::MatrixXd> matrix, Eigen::VectorXd DelX, Ei
     }
   }    
 }
+void linearRegressionLeastSquares(Eigen::MatrixXd Y, Eigen::MatrixXd X, Eigen::MatrixXd &Beta){
+  int points = Y.rows();
+  int parameters = X.cols();
+  int observables = Y.cols();
+  Beta = Eigen::MatrixXd::Zero(observables,parameters); 
+
+  Eigen::MatrixXd temp = Eigen::MatrixXd::Zero(points,2);
+  Eigen::VectorXd beta = Eigen::VectorXd::Zero(parameters);
+  Eigen::VectorXd y = Eigen::VectorXd::Zero(points);
+
+  temp = X.transpose()*X;
+  temp = temp.inverse();
+  for(int j=0;j<observables;j++){
+    y = Y.col(j);
+    beta = temp*X.transpose()*y;
+    Beta.row(j) = beta;
+  }
+}

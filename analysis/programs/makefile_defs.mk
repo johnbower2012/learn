@@ -22,11 +22,11 @@ LIBS=
 
 ## dependecies
 #### pattern substition adds folder location to *.h files
-_DEPS=coshfunc.h analysis.h system.h
+_DEPS=coshfunc.h analysis.h system.h emulator.h
 DEPS=$(patsubst %, $(IDIR)/%, $(_DEPS))
 
 ## object files
 #### pattern substition adds folder location to *.o files
-_OBJ=coshfunc.o analysis.o system.o main.o
+_OBJ=coshfunc.o analysis.o system.o emulator.o main.o
 OBJ=$(patsubst %, $(ODIR)/%, $(_OBJ))
 
