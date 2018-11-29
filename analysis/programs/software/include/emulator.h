@@ -8,7 +8,7 @@
 #include<iostream>
 
 class emulator{
-public:
+ public:
   int trainPoints;
   int paramCount;
   int obsCount;
@@ -26,11 +26,14 @@ public:
   std::vector<Eigen::MatrixXd> KernelInv;
   std::vector<Eigen::MatrixXd> HMatrix;
 
+  emulator(Eigen::MatrixXd newX, Eigen::MatrixXd newHyperparam);
   emulator(Eigen::MatrixXd newX, Eigen::MatrixXd newHyperparam, Eigen::MatrixXd newBeta);
+  void Construct(Eigen::MatrixXd newX, Eigen::MatrixXd newHyperparam);
 
   void kernelFunction(Eigen::MatrixXd A, Eigen::MatrixXd B, int obsIndex, Eigen::MatrixXd &kernlMatrix);
   void regressionLinearFunction(Eigen::MatrixXd testX, int obsIndex, Eigen::MatrixXd &HMatrix);
   void Emulate(Eigen::MatrixXd testX, Eigen::MatrixXd Y, Eigen::MatrixXd &outMatrix);
+  void Emulate_NR(Eigen::MatrixXd testX, Eigen::MatrixXd Y, Eigen::MatrixXd &outMatrix);
 };
 
 #endif

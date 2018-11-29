@@ -252,6 +252,27 @@ void WriteFile(std::string filename, Eigen::MatrixXd &Matrix,std::string delimit
     printf("Unable to open %s.\n",filename.c_str());
   }  
 }
+void WriteCSVFile(std::string filename, std::vector<std::string> header, Eigen::MatrixXd &Matrix,std::string delimiter){
+  std::string line;
+  int rows = Matrix.rows(),
+    cols = Matrix.cols();
+  std::fstream ofile(filename,std::ios::out);
+  if(ofile.is_open()){
+    for(int col=0;col<cols-1;col++){
+      ofile << "'" << header[col] << "',";
+    }
+    ofile << "'" << header[cols-1] << "'\n";
+    for(int row=0;row<rows;row++){
+      for(int col=0;col<cols-1;col++){
+	ofile << Matrix(row,col) << delimiter;
+      }
+      ofile << Matrix(row,cols-1) << "\n";
+    }
+    ofile.close();
+  }else{
+    printf("Unable to open %s.\n",filename.c_str());
+  }  
+}
 void WriteParamFile(std::string fileName, std::vector<std::string> &header, std::string delimiter, Eigen::MatrixXd &file){
   int rows = file.rows();
   int cols = file.cols();

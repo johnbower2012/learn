@@ -1,5 +1,5 @@
 ## output file name
-MAIN=main
+MAIN=test
 
 ## suffixes used:
 #.SUFFIXES: .cpp .o .x .h
@@ -22,11 +22,11 @@ LIBS=
 
 ## dependecies
 #### pattern substition adds folder location to *.h files
-_DEPS=coshfunc.h analysis.h system.h emulator.h
+_DEPS=coshfunc.h analysis.h system.h emulator.h mcmc.h
 DEPS=$(patsubst %, $(IDIR)/%, $(_DEPS))
 
 ## object files
 #### pattern substition adds folder location to *.o files
-_OBJ=coshfunc.o analysis.o system.o emulator.o main.o
+_OBJ=coshfunc.o analysis.o system.o emulator.o mcmc.o test.o
 OBJ=$(patsubst %, $(ODIR)/%, $(_OBJ))
 

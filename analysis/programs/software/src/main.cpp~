@@ -7,10 +7,12 @@
 #include "analysis.h"
 #include "coshfunc.h"
 #include "emulator.h"
+#include "mcmc.h"
 
 int main(int argc, char* argv[]){
   std::vector<std::string> modelfilenames={"I211_J211.dat","I2212_J2212.dat","I321_J2212.dat","I321_J321.dat"},
-    expfilenames={"star_pipi.dat","star_ppbar.dat","star_pK.dat","star_KK.dat"};
+    expfilenames={"star_pipi.dat","star_ppbar.dat","star_pK.dat","star_KK.dat"},
+      paramNames;
 
   std::string foldername="model_output",
     writefilename="parameters.dat",
@@ -34,7 +36,7 @@ int main(int argc, char* argv[]){
 
   std::vector<Eigen::MatrixXd> ModelMatrix(modelfiles),
     ExpMatrix(expfiles);
-  Eigen::MatrixXd Dy,ModelObs,ExpObs,Parameters,GAB;
+  Eigen::MatrixXd Dy,ModelObs,ExpObs,Parameters,GAB,range;
   Eigen::VectorXd modeldy, expdy;
 
   //Load Data
@@ -45,7 +47,7 @@ int main(int argc, char* argv[]){
 
   //Write Parameters files
   WriteParameterFiles(rangename, foldername, writefilename, delimiter, start, finish, ab,Parameters);
-  parameters = Parameters.rows();
+  LoadParamFile(rangename,paramNames,range,delimiter);
   WriteFile(infilename,Parameters,delimiter);
 
   //Construct gab functions
@@ -86,7 +88,6 @@ int main(int argc, char* argv[]){
   EigenSort(EigenValues,EigenVectors);
   ModelZ = ModelObs.transpose()*EigenVectors;
   ExpZ = ExpObs.transpose()*EigenVectors;
-  observables = ModelZ.cols();
   //std::cout << "Parameters:\n" << Parameters << std::endl;  
   //std::cout << "ModelObs:\n" << ModelObs << std::endl;
   //std::cout << "ExpObs:\n" << ExpObs << std::endl;
@@ -99,15 +100,22 @@ int main(int argc, char* argv[]){
   //std::cout << "EV:\n" << EigenVectors << std::endl;
   //std::cout << "----------------\n" << std::endl;
   //std::cout << "ModelZ:\n" << ModelZ << std::endl;
-  AverageColumns(Mean,ModelZ);
-  std::cout << "MMean:\n" << Mean.transpose() << std::endl;
-  std::cout << "ExpZ:\n" << ExpZ << std::endl;
+  //AverageColumns(Mean,ModelZ);
+  //std::cout << "MMean:\n" << Mean.transpose() << std::endl;
+  //std::cout << "ExpZ:\n" << ExpZ << std::endl;
 
-  Eigen::MatrixXd Beta,
-    Hyperparameters,
-    testX(1,parameters),
+  observables = ModelZ.cols();
+  parameters = Parameters.cols();
+
+  Eigen::MatrixXd Hyperparameters,
     outMatrix,
-    plot(finish-start,parameters+obsservables);
+    plot(finish-start,parameters+observables);
+  Eigen::VectorXd Width(parameters);
+
+  for(int i=0;i<parameters;i++){
+    Width(i) = (range(i,1) - range(i,0))/10.0;
+  }
+
   for(int i=0;i<finish-start;i++){
     for(int j=0;j<parameters;j++){
       plot(i,j) = Parameters(i,j);
@@ -117,14 +125,17 @@ int main(int argc, char* argv[]){
     }
   }
   WriteFile("plot.dat",plot," ");
-
   LoadFile("hyperparameters.dat",Hyperparameters," ");
-  linearRegressionLeastSquares(ModelZ,Parameters,Beta);
-  WriteFile("beta.dat",Beta," ");
 
-  testX.row(0) = Parameters.row(0);
-  emulator emulation(Parameters, Hyperparameters, Beta);
-  emulation.Emulate(testX,ModelZ,outMatrix);
-  std::cout << outMatrix << std::endl;
+  emulator emulation(Parameters, Hyperparameters);
+  MCMC mcmc(ExpZ,range,Width);
+  mcmc.setPosition();
+  int Samples=100000;
+  
+  Eigen::MatrixXd History;
+  mcmc.Run(Samples,History,emulation,ModelZ);
+  Eigen::MatrixXd trace = History.block(0,0,Samples,parameters);
+  WriteCSVFile("mcmctrace.csv",paramNames,trace,",");
+
   return 0;
 }

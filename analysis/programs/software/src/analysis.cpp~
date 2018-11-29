@@ -145,7 +145,7 @@ void FirstMoment(Eigen::MatrixXd Function, double &Moment){
     Moment += f*x*dx;
   }
   ZerothMoment(Function,zero);
-  //  Moment /= zero;
+  //Moment /= zero;
 }
 void SecondMoment(Eigen::MatrixXd Function, double &Moment){
   int points=Function.rows()-1;
@@ -160,7 +160,7 @@ void SecondMoment(Eigen::MatrixXd Function, double &Moment){
     dx = Function(point+1,0) - Function(point,0);
     Moment += f*(x-first)*(x-first)*dx;
   }
-  //  Moment /= zero;
+  //Moment /= zero;
 }
 void MatrixMoments(std::vector<Eigen::MatrixXd> matrix, Eigen::VectorXd DelX, Eigen::MatrixXd &Obs){
   int files = matrix.size(),
@@ -190,10 +190,10 @@ void linearRegressionLeastSquares(Eigen::MatrixXd Y, Eigen::MatrixXd X, Eigen::M
   int points = Y.rows();
   int parameters = X.cols();
   int observables = Y.cols();
-  Beta = Eigen::MatrixXd::Zero(observables,1+parameters); 
+  Beta = Eigen::MatrixXd::Zero(observables,parameters); 
 
   Eigen::MatrixXd temp = Eigen::MatrixXd::Zero(points,2);
-  Eigen::VectorXd beta = Eigen::VectorXd::Zero(1+parameters);
+  Eigen::VectorXd beta = Eigen::VectorXd::Zero(parameters);
   Eigen::VectorXd y = Eigen::VectorXd::Zero(points);
 
   temp = X.transpose()*X;
@@ -201,8 +201,6 @@ void linearRegressionLeastSquares(Eigen::MatrixXd Y, Eigen::MatrixXd X, Eigen::M
   for(int j=0;j<observables;j++){
     y = Y.col(j);
     beta = temp*X.transpose()*y;
-    std::cout << beta.rows() << " " << beta.cols() << std::endl;
     Beta.row(j) = beta;
-
   }
 }

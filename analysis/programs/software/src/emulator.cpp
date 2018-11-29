@@ -24,6 +24,48 @@ emulator::emulator(Eigen::MatrixXd newX, Eigen::MatrixXd newHyperparam, Eigen::M
     regressionLinearFunction(this->X, ob,  this->HMatrix[ob]);
   }
 }
+emulator::emulator(Eigen::MatrixXd newX, Eigen::MatrixXd newHyperparam){
+  this->X = newX;
+  this->Hyperparam = newHyperparam;
+
+  this->trainPoints = this->X.rows();
+  this->paramCount = this->X.cols();
+  this->hyperparamCount = this->Hyperparam.cols();
+  this->obsCount = this->Hyperparam.rows();
+
+  this->Noise = this->Hyperparam.col(this->hyperparamCount - 1);
+
+  Eigen::MatrixXd trainI = Eigen::MatrixXd::Identity(trainPoints, trainPoints);
+
+  this->Kernel = std::vector<Eigen::MatrixXd>(obsCount);
+  this->KernelInv = std::vector<Eigen::MatrixXd>(obsCount);
+  for(int ob=0;ob<obsCount;ob++){
+    this->kernelFunction(this->X,this->X,ob,this->Kernel[ob]);
+    this->Kernel[ob] += trainI*(this->Noise(ob)*Noise(ob) + this->epsilon);
+    this->KernelInv[ob] = Kernel[ob].inverse();
+  }
+}
+void emulator::Construct(Eigen::MatrixXd newX, Eigen::MatrixXd newHyperparam){
+  this->X = newX;
+  this->Hyperparam = newHyperparam;
+
+  this->trainPoints = this->X.rows();
+  this->paramCount = this->X.cols();
+  this->hyperparamCount = this->Hyperparam.cols();
+  this->obsCount = this->Hyperparam.rows();
+
+  this->Noise = this->Hyperparam.col(this->hyperparamCount - 1);
+
+  Eigen::MatrixXd trainI = Eigen::MatrixXd::Identity(trainPoints, trainPoints);
+
+  this->Kernel = std::vector<Eigen::MatrixXd>(obsCount);
+  this->KernelInv = std::vector<Eigen::MatrixXd>(obsCount);
+  for(int ob=0;ob<obsCount;ob++){
+    this->kernelFunction(this->X,this->X,ob,this->Kernel[ob]);
+    this->Kernel[ob] += trainI*(this->Noise(ob)*Noise(ob) + this->epsilon);
+    this->KernelInv[ob] = Kernel[ob].inverse();
+  }
+}
 void emulator::kernelFunction(Eigen::MatrixXd A, Eigen::MatrixXd B, int obsIndex, Eigen::MatrixXd &kernelMatrix){
   double xi, xj, sum, diff,
     theta1 = this->Hyperparam(obsIndex,0)*this->Hyperparam(obsIndex,0),
@@ -117,4 +159,58 @@ void emulator::Emulate(Eigen::MatrixXd testX, Eigen::MatrixXd Y, Eigen::MatrixXd
   for(int param=0;param<paramCount;param++){
     outMatrix.col(param) = testX.col(param);
   }
+}
+void emulator::Emulate_NR(Eigen::MatrixXd testX, Eigen::MatrixXd Y, Eigen::MatrixXd &outMatrix){
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::default_random_engine generator(seed);
+  std::normal_distribution<double> dist(0.0,1.0);
+
+  int testPoints = testX.rows();
+  
+  //matrices and vectors for computational use
+  Eigen::MatrixXd KernelS = Eigen::MatrixXd::Zero(trainPoints,testPoints),
+    KernelSS = Eigen::MatrixXd::Zero(testPoints,testPoints),
+    
+    meanMatrix = Eigen::MatrixXd::Zero(testPoints,1),
+    //varMatrix = Eigen::MatrixXd::Zero(testPoints, testPoints),
+    //L = Eigen::MatrixXd::Zero(testPoints, testPoints),
+
+    //postFunc = Eigen::MatrixXd::Zero(testPoints, 1),
+    //randomSample = Eigen::MatrixXd::Zero(testPoints, 1),
+
+    testI = Eigen::MatrixXd::Identity(testPoints,testPoints);
+
+  //outMatrix = Eigen::MatrixXd::Zero(testPoints,this->paramCount+this->obsCount*5);
+  outMatrix = Eigen::MatrixXd::Zero(testPoints,this->obsCount);
+
+  for(int ob=0;ob<obsCount;ob++){
+    kernelFunction(this->X, testX, ob, KernelS);
+    kernelFunction(testX, testX, ob, KernelSS);
+    KernelSS += testI*this->epsilon;
+
+    meanMatrix = KernelS.transpose()*this->KernelInv[ob]*Y.col(ob);
+
+    outMatrix.col(ob) = meanMatrix.col(0);
+    /*
+    varMatrix = KernelSS - KernelS.transpose()*this->KernelInv[ob]*KernelS;
+    L = varMatrix.llt().matrixL();
+
+    for(int tp=0;tp<testPoints;tp++){
+      randomSample(tp,0) = dist(generator);
+    }
+    postFunc = meanMatrix + L*randomSample;
+
+    outMatrix.col(paramCount + this->obsCount*3 + ob) = postFunc.col(0);
+    for(int tp=0;tp<testPoints;tp++){
+      outMatrix(tp,paramCount + this->obsCount + ob) = meanMatrix(tp,0) - 2.0*sqrt(varMatrix(tp,tp));
+      outMatrix(tp,paramCount + this->obsCount*2 + ob) = meanMatrix(tp,0) + 2.0*sqrt(varMatrix(tp,tp));
+      outMatrix(tp,paramCount + this->obsCount*4 + ob) = sqrt(varMatrix(tp,tp));
+    }
+    */
+  }
+  /*
+  for(int param=0;param<paramCount;param++){
+    outMatrix.col(param) = testX.col(param);
+  }
+  */
 }
