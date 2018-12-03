@@ -83,51 +83,68 @@ int main(int argc, char* argv[]){
   TildeFunction(ModelTilde,Mean,Error,ModelObs);
   TildeFunction(ExpTilde,Mean,Error,ExpObs);
 
-  CovarianceFunction(Covariance,ModelObs);
+  CovarianceFunction(Covariance,ModelTilde);
   EigenSolve(EigenValues,EigenVectors,Covariance);
   EigenSort(EigenValues,EigenVectors);
-  ModelZ = ModelObs.transpose()*EigenVectors;
-  ExpZ = ExpObs.transpose()*EigenVectors;
-  //std::cout << "Parameters:\n" << Parameters << std::endl;  
-  //std::cout << "ModelObs:\n" << ModelObs << std::endl;
-  //std::cout << "ExpObs:\n" << ExpObs << std::endl;
-  //std::cout << "Error:\n" << Error << std::endl;
-  //std::cout << "Mean:\n" << Mean << std::endl;
-  //std::cout << "ModelTilde:\n" << ModelTilde << std::endl;
-  //std::cout << "ExpTilde:\n" << ExpTilde << std::endl;
-  //std::cout << "Covariance:\n" << Covariance << std::endl;
-  //std::cout << "EV:\n" << EigenValues << std::endl;
-  //std::cout << "EV:\n" << EigenVectors << std::endl;
-  //std::cout << "----------------\n" << std::endl;
-  //std::cout << "ModelZ:\n" << ModelZ << std::endl;
-  //AverageColumns(Mean,ModelZ);
-  //std::cout << "MMean:\n" << Mean.transpose() << std::endl;
-  //std::cout << "ExpZ:\n" << ExpZ << std::endl;
+  ModelZ = ModelTilde.transpose()*EigenVectors;
+  ExpZ = ExpTilde.transpose()*EigenVectors;
 
+  WriteFile(foldername+"/expz.dat",ExpZ," ");
+
+  /*
+  std::cout << "Parameters:\n" << Parameters << std::endl;  
+  std::cout << "ModelObs:\n" << ModelObs << std::endl;
+  std::cout << "ExpObs:\n" << ExpObs << std::endl;
+  std::cout << "Error:\n" << Error << std::endl;
+  std::cout << "Mean:\n" << Mean << std::endl;
+  std::cout << "ModelTilde:\n" << ModelTilde << std::endl;
+  std::cout << "ExpTilde:\n" << ExpTilde << std::endl;
+  std::cout << "Covariance:\n" << Covariance << std::endl;
+  */
+  std::cout << "EV:\n" << EigenValues.transpose() << std::endl;
+  /*
+    std::cout << "EV:\n" << EigenVectors << std::endl;
+  std::cout << "----------------\n" << std::endl;
+  std::cout << "ModelZ:\n" << ModelZ << std::endl;
+  AverageColumns(Mean,ModelZ);
+  std::cout << "MMean:\n" << Mean.transpose() << std::endl;
+  std::cout << "ExpZ:\n" << ExpZ << std::endl;
+  */
   observables = ModelZ.cols();
   parameters = Parameters.cols();
-
+  int test=finish-start;
   Eigen::MatrixXd Hyperparameters,
-    outMatrix,
-    plot(finish-start,parameters+observables);
-  Eigen::VectorXd Width(parameters);
+    outMatrix(test,parameters+observables),
+    plot(finish-start,parameters+observables),
+    testX = Parameters,
+    testY;
 
+  plot.block(0,0,finish-start,parameters) = Parameters;
+  plot.block(0,parameters,finish-start,observables) = ModelZ;
+  WriteFile("trainplot.dat",plot," ");
+
+  Eigen::VectorXd Width(parameters);
   for(int i=0;i<parameters;i++){
     Width(i) = (range(i,1) - range(i,0))/10.0;
   }
-
-  for(int i=0;i<finish-start;i++){
-    for(int j=0;j<parameters;j++){
-      plot(i,j) = Parameters(i,j);
-    }
-    for(int j=0;j<observables;j++){
-      plot(i,j+parameters) = ModelZ(i,j);
-    }
-  }
-  WriteFile("plot.dat",plot," ");
   LoadFile("hyperparameters.dat",Hyperparameters," ");
 
+  ExpZ = ModelZ.row(0);
+  removeRow(ModelZ,0);
+  Eigen::MatrixXd row = Parameters.row(0);
+  WriteFile("param.dat",row," ");
+  removeRow(Parameters,0);
+  WriteFile("exp.dat",ExpZ," ");
+  WriteFile("mode.dat",ModelZ," ");
   emulator emulation(Parameters, Hyperparameters);
+
+  /*
+  emulation.Emulate_NR(testX, ModelZ, testY);
+  outMatrix.block(0,0,test,parameters) = testX;
+  outMatrix.block(0,parameters,test,observables) = testY;
+  WriteFile("testplot.dat",outMatrix," ");
+  */
+
   MCMC mcmc(ExpZ,range,Width);
   mcmc.setPosition();
   int Samples=10000;
@@ -136,6 +153,6 @@ int main(int argc, char* argv[]){
   mcmc.Run(Samples,History,emulation,ModelZ);
   Eigen::MatrixXd trace = History.block(0,0,Samples,parameters);
   WriteCSVFile("mcmctrace.csv",paramNames,trace,",");
-
+  
   return 0;
 }

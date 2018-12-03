@@ -13,7 +13,7 @@ class MCMC{
   int obsCount;
   int paramCount;
   int Samples;
-  Eigen::VectorXd targetValue;
+  Eigen::MatrixXd targetValue;
   Eigen::MatrixXd Range;
 
   Eigen::MatrixXd Position;

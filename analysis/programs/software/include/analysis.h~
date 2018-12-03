@@ -18,5 +18,6 @@ void ZerothMoment(Eigen::MatrixXd Function, double &Moment);
 void FirstMoment(Eigen::MatrixXd Function, double &Moment);
 void SecondMoment(Eigen::MatrixXd Function, double &Moment);
 void MatrixMoments(std::vector<Eigen::MatrixXd> Matrix, Eigen::VectorXd DelX, Eigen::MatrixXd &Obs);
+void linearRegressionLeastSquares(Eigen::MatrixXd Y, Eigen::MatrixXd X, Eigen::MatrixXd &Beta);
 
 #endif

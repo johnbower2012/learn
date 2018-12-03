@@ -145,7 +145,7 @@ void FirstMoment(Eigen::MatrixXd Function, double &Moment){
     Moment += f*x*dx;
   }
   ZerothMoment(Function,zero);
-  Moment /= zero;
+  //  Moment /= zero;
 }
 void SecondMoment(Eigen::MatrixXd Function, double &Moment){
   int points=Function.rows()-1;
@@ -160,7 +160,7 @@ void SecondMoment(Eigen::MatrixXd Function, double &Moment){
     dx = Function(point+1,0) - Function(point,0);
     Moment += f*(x-first)*(x-first)*dx;
   }
-  Moment /= zero;
+  //  Moment /= zero;
 }
 void MatrixMoments(std::vector<Eigen::MatrixXd> matrix, Eigen::VectorXd DelX, Eigen::MatrixXd &Obs){
   int files = matrix.size(),
@@ -203,4 +203,23 @@ void linearRegressionLeastSquares(Eigen::MatrixXd Y, Eigen::MatrixXd X, Eigen::M
     beta = temp*X.transpose()*y;
     Beta.row(j) = beta;
   }
+}
+void removeRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove){
+  unsigned int numRows = matrix.rows()-1;
+  unsigned int numCols = matrix.cols();
+
+  if( rowToRemove < numRows )
+    matrix.block(rowToRemove,0,numRows-rowToRemove,numCols) = matrix.block(rowToRemove+1,0,numRows-rowToRemove,numCols);
+
+  matrix.conservativeResize(numRows,numCols);
+}
+
+void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove){
+  unsigned int numRows = matrix.rows();
+  unsigned int numCols = matrix.cols()-1;
+
+  if( colToRemove < numCols )
+    matrix.block(0,colToRemove,numRows,numCols-colToRemove) = matrix.block(0,colToRemove+1,numRows,numCols-colToRemove);
+
+  matrix.conservativeResize(numRows,numCols);
 }

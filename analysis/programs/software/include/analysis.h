@@ -20,4 +20,8 @@ void SecondMoment(Eigen::MatrixXd Function, double &Moment);
 void MatrixMoments(std::vector<Eigen::MatrixXd> Matrix, Eigen::VectorXd DelX, Eigen::MatrixXd &Obs);
 void linearRegressionLeastSquares(Eigen::MatrixXd Y, Eigen::MatrixXd X, Eigen::MatrixXd &Beta);
 
+void removeRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove);
+void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove);
+
 #endif
+

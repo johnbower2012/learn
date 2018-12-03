@@ -14,7 +14,9 @@ class emulator{
   int obsCount;
   int hyperparamCount;
   
-  double epsilon=1e-8;
+  bool printVariance;
+
+  double epsilon;
   Eigen::VectorXd noise;
 
   Eigen::MatrixXd X;
@@ -34,6 +36,8 @@ class emulator{
   void regressionLinearFunction(Eigen::MatrixXd testX, int obsIndex, Eigen::MatrixXd &HMatrix);
   void Emulate(Eigen::MatrixXd testX, Eigen::MatrixXd Y, Eigen::MatrixXd &outMatrix);
   void Emulate_NR(Eigen::MatrixXd testX, Eigen::MatrixXd Y, Eigen::MatrixXd &outMatrix);
+
+  void setPrint(bool newPrintVariance);
 };
 
 #endif

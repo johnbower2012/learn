@@ -145,7 +145,7 @@ void FirstMoment(Eigen::MatrixXd Function, double &Moment){
     Moment += f*x*dx;
   }
   ZerothMoment(Function,zero);
-  //Moment /= zero;
+  //  Moment /= zero;
 }
 void SecondMoment(Eigen::MatrixXd Function, double &Moment){
   int points=Function.rows()-1;
@@ -160,7 +160,7 @@ void SecondMoment(Eigen::MatrixXd Function, double &Moment){
     dx = Function(point+1,0) - Function(point,0);
     Moment += f*(x-first)*(x-first)*dx;
   }
-  //Moment /= zero;
+  //  Moment /= zero;
 }
 void MatrixMoments(std::vector<Eigen::MatrixXd> matrix, Eigen::VectorXd DelX, Eigen::MatrixXd &Obs){
   int files = matrix.size(),

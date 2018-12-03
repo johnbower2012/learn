@@ -12,6 +12,7 @@ MCMC::MCMC(){
 }
 MCMC::MCMC(Eigen::MatrixXd newTargetValue, Eigen::MatrixXd newRange, Eigen::VectorXd newWidths){
   this->maxLogLikelihood = -std::numeric_limits<double>::infinity();
+  this->Likelihood = maxLogLikelihood;
   this->setSeed(1);
   this->targetValue = newTargetValue;
   this->obsCount = this->targetValue.cols();
@@ -85,25 +86,29 @@ bool MCMC::decide(Eigen::MatrixXd Z){
     }
   }
   LH = this->getLogLikelihood(Z);
-  if(LH > this->maxLogLikelihood){
-    this->maxLogLikelihood = LH;
-    printf("logLH: %f\n",this->maxLogLikelihood);
-  }
 
-  ratio = exp(LH - this->Likelihood);
-  if(ratio<0.0){
+  ratio = LH - this->Likelihood;
+  if(ratio>0){
+    this->Position = this->testPosition;
+    this->Likelihood = LH;
+    if(this->Likelihood > this->maxLogLikelihood){
+      this->maxLogLikelihood = this->Likelihood;
+      printf("MaxLogLH: %f\n",this->maxLogLikelihood);
+    }
+    return true;
+  }else{
     random = uniform();
-    if(random<ratio){
+    if(log(random)<ratio){
       this->Position = this->testPosition;
       this->Likelihood = LH;
+      if(this->Likelihood > this->maxLogLikelihood){
+	this->maxLogLikelihood = this->Likelihood;
+	printf("MaxLogLH: %f\n",this->maxLogLikelihood);
+      }
       return true;
     }else{
       return false;
     }
-  }else{
-    this->Position = this->testPosition;
-    this->Likelihood = LH;
-    return true;
   }
 }
 void MCMC::Run(int Samples, Eigen::MatrixXd &History, emulator obsEmulator, Eigen::MatrixXd Y){
@@ -127,10 +132,10 @@ void MCMC::Run(int Samples, Eigen::MatrixXd &History, emulator obsEmulator, Eige
     }
     if((step+1)%print==0){
       percent+=10;
-      printf("%d%% completed...\n",percent);
+      printf("%d%% completed...%f%% steps accepted\n",percent,acceptedSteps*100/((double)Samples*percent/100));
     }
   }
-  acceptedSteps *= 100/(double) Samples;
+  acceptedSteps *= 100.0/(double) Samples;
   printf("Percent Acceptance: %f%%...\n",acceptedSteps);
   printf("MaxLLH: %f...\n",this->maxLogLikelihood);
 }

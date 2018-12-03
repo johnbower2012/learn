@@ -22,7 +22,7 @@ int main(int argc, char* argv[]){
   for(int i=0;i<train;i++){
     X(i,0) = xinit + dx*i;
     X(i,1) = xinit + dx*((i*i*i)%train);
-    Y(i,0) = (X(i,0)-5)*(X(i,0)-5) + fabs(X(i,1) - 1);
+    Y(i,0) = (X(i,0)-5)*(X(i,0)-2)*fabs(X(i,1) - 1)*fabs(X(i,1) - 7);
     in(i,0) = X(i,0);
     in(i,1) = X(i,1);
     in(i,2) = Y(i,0);

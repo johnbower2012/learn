@@ -1,6 +1,9 @@
 #include "emulator.h"
 
 emulator::emulator(Eigen::MatrixXd newX, Eigen::MatrixXd newHyperparam, Eigen::MatrixXd newBeta){
+  this->printVariance=false;
+  this->epsilon=1e-8;
+
   this->X = newX;
   this->Hyperparam = newHyperparam;
   this->Beta = newBeta;
@@ -25,6 +28,9 @@ emulator::emulator(Eigen::MatrixXd newX, Eigen::MatrixXd newHyperparam, Eigen::M
   }
 }
 emulator::emulator(Eigen::MatrixXd newX, Eigen::MatrixXd newHyperparam){
+  this->printVariance=false;
+  this->epsilon=1e-8;
+
   this->X = newX;
   this->Hyperparam = newHyperparam;
 
@@ -46,6 +52,9 @@ emulator::emulator(Eigen::MatrixXd newX, Eigen::MatrixXd newHyperparam){
   }
 }
 void emulator::Construct(Eigen::MatrixXd newX, Eigen::MatrixXd newHyperparam){
+  this->printVariance=false;
+  this->epsilon=1e-8;
+
   this->X = newX;
   this->Hyperparam = newHyperparam;
 
@@ -172,16 +181,19 @@ void emulator::Emulate_NR(Eigen::MatrixXd testX, Eigen::MatrixXd Y, Eigen::Matri
     KernelSS = Eigen::MatrixXd::Zero(testPoints,testPoints),
     
     meanMatrix = Eigen::MatrixXd::Zero(testPoints,1),
-    //varMatrix = Eigen::MatrixXd::Zero(testPoints, testPoints),
-    //L = Eigen::MatrixXd::Zero(testPoints, testPoints),
+    varMatrix = Eigen::MatrixXd::Zero(testPoints, testPoints),
+    L = Eigen::MatrixXd::Zero(testPoints, testPoints),
 
     //postFunc = Eigen::MatrixXd::Zero(testPoints, 1),
     //randomSample = Eigen::MatrixXd::Zero(testPoints, 1),
 
     testI = Eigen::MatrixXd::Identity(testPoints,testPoints);
 
-  //outMatrix = Eigen::MatrixXd::Zero(testPoints,this->paramCount+this->obsCount*5);
-  outMatrix = Eigen::MatrixXd::Zero(testPoints,this->obsCount);
+  if(this->printVariance==true){
+    outMatrix = Eigen::MatrixXd::Zero(testPoints,this->obsCount*2);
+  }else{
+    outMatrix = Eigen::MatrixXd::Zero(testPoints,this->obsCount);
+  }
 
   for(int ob=0;ob<obsCount;ob++){
     kernelFunction(this->X, testX, ob, KernelS);
@@ -190,16 +202,20 @@ void emulator::Emulate_NR(Eigen::MatrixXd testX, Eigen::MatrixXd Y, Eigen::Matri
 
     meanMatrix = KernelS.transpose()*this->KernelInv[ob]*Y.col(ob);
 
-    outMatrix.col(ob) = meanMatrix.col(0);
-    /*
-    varMatrix = KernelSS - KernelS.transpose()*this->KernelInv[ob]*KernelS;
-    L = varMatrix.llt().matrixL();
 
+    if(this->printVariance==true){
+      varMatrix = KernelSS - KernelS.transpose()*this->KernelInv[ob]*KernelS;
+      L = varMatrix.llt().matrixL();
+      outMatrix.col(ob*2) = meanMatrix.col(0);
+      outMatrix.col(ob*2+1) = L.diagonal();
+    }else{
+      outMatrix.col(ob) = meanMatrix.col(0);
+    }
+    /*
     for(int tp=0;tp<testPoints;tp++){
       randomSample(tp,0) = dist(generator);
     }
     postFunc = meanMatrix + L*randomSample;
-
     outMatrix.col(paramCount + this->obsCount*3 + ob) = postFunc.col(0);
     for(int tp=0;tp<testPoints;tp++){
       outMatrix(tp,paramCount + this->obsCount + ob) = meanMatrix(tp,0) - 2.0*sqrt(varMatrix(tp,tp));
@@ -213,4 +229,7 @@ void emulator::Emulate_NR(Eigen::MatrixXd testX, Eigen::MatrixXd Y, Eigen::Matri
     outMatrix.col(param) = testX.col(param);
   }
   */
+}
+void emulator::setPrint(bool newPrintVariance){
+  this->printVariance = newPrintVariance;
 }
