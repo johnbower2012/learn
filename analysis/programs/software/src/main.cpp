@@ -14,17 +14,19 @@ double func(double x)
   //return sin(6.28*x);
   return sin(3.14*x);
   //return sin(x);
+  //return (6.0*x - 2.0)*(6.0*x - 2.0)*sin(12.0*x - 4.0);
 }
 
 int main(int argc, char* argv[]){
 
 
   /***********testing*********/
-  /*
+  bool testing=true;
+  if(testing){
   int points = 23,
     test = 50;
-  double start=0,
-    end=5,
+  double start=-7.5,
+    end=7.5,
     dx=(end-start)/(double) (points),
     x=0;
 
@@ -35,28 +37,26 @@ int main(int argc, char* argv[]){
   Eigen::MatrixXd testOut = Eigen::MatrixXd::Zero(test,4);
   if( argc != 4 )
     {
-      printf("Usage: r l x\n");
+      printf("Usage: r l points\n");
       return 1;
     }
 
   hyperparam(0,0) = atof(argv[1]);
   hyperparam(0,1) = atof(argv[2]);
   hyperparam(0,2) = 0.1;
-  end = atof(argv[3]);
+  points = atoi(argv[3]);
   dx=(end-start)/(double) (points);
 
  for(int i = 0; i < points; i++){
     function(i,0) = x = start + dx*(double) i;
-    function(i,1) = func(x);
-    //function(i,1) = (6.0*x - 2.0)*(6.0*x - 2.0)*sin(12.0*x - 4.0);
+    //function(i,1) = func(x);
+
   }
   dx = (end - start)/(double) (test);
  for(int i = 0; i < test; i++){
     testX(i,0) = start + dx*(double) i;
   }
 
-
-  
   emulator emul(function.col(0),hyperparam);
   emul.Emulate_NoPrior(function.col(0),testY);
   function.col(1) = testY.col(0);
@@ -74,21 +74,27 @@ int main(int argc, char* argv[]){
   WriteFile("train.dat",function," ");
 
   emul.setPrint(true);
-  Eigen::MatrixXd logprob = Eigen::MatrixXd::Zero(50,50);
+  int Row=10.0/0.2;
+  int Col=5.0/0.1;
+  Eigen::MatrixXd logprob = Eigen::MatrixXd::Zero(Row,Col);
   std::fstream ofile("log.dat",std::ios::out);
   for( double r = 0.1; r < 10.0; r += 0.2 )
     {
+      int R = r/0.2;
       hyperparam(0,0) = r;
-      for( double l = 0.1; l < 10.0; l += 0.2 )
+      for( double l = 0.05; l < 5.0; l += 0.1 )
 	{
+	  int L = l/0.1;
 	  hyperparam(0,1) = l;
-	  for( double n = 0.1; n < 0.5; n += 0.5)
+	  for( double n = 0.1; n < 0.2; n += 0.5)
 	    {
+	      //int N = n/0.05;
 	      hyperparam(0,2) = n;
 	      emul.Construct(function.col(0),hyperparam);
 	      emul.setPrint(true);
-	      logprob((int)(r/0.2),(int)(l/0.2)) = emul.Emulate_NR(testX,function.col(1),testY);
-	      ofile << r << " " << l << " " << n << " " << logprob((int) (r/0.2),(int) (l/0.2)) << '\n';
+	      logprob(R,L) = emul.Emulate_NR(testX,function.col(1),testY);
+	      ofile << r << " " << l << " " << n << " " << logprob(R,L) << '\n';
+
 	    }
 	}
     }
@@ -96,13 +102,13 @@ int main(int argc, char* argv[]){
 
   Eigen::MatrixXf::Index maxRow, maxCol;
   float max = logprob.maxCoeff(&maxRow, &maxCol);
-  printf("%f %f %f\n",max,-0.1+0.2*(double)maxRow,-0.1 + 0.2*(double)maxCol);
+  printf("%f %f %f\n",max,0.1+0.2*(double)maxRow,0.05 + 0.1*(double)maxCol);
+}
 
 
-  */
 
   /********COMPUTATION*********/
-
+  if(!testing){
   std::vector<std::string> modelfilenames={"I211_J211.dat","I2212_J2212.dat","I321_J2212.dat","I321_J321.dat"},
     expfilenames={"star_pipi.dat","star_ppbar.dat","star_pK.dat","star_KK.dat"},
       paramNames;
@@ -273,19 +279,19 @@ int main(int argc, char* argv[]){
 
   emulation.setPrint(true);
 
-  int rInt = 5.0/0.2;
-  int lInt = 2.0/0.1;
+  int rInt = 80.0/5.0-2;
+  int lInt = 0.5/0.05;
   Eigen::MatrixXd logprob = Eigen::MatrixXd::Zero(rInt,lInt);
   Eigen::MatrixXd hyperparam = Eigen::MatrixXd::Zero(1,3);
 
   std::fstream ofile("log.dat",std::ios::out);
-  for( double r = 0.1; r < 5.0; r += 0.2 )
+  for( double r = 10; r < 80.0; r += 5 )
     {
-      int R = r/0.2;
+      int R = r/5.0 - 2;
       hyperparam(0,0) = r;
-      for( double l = 0.1; l < 2.0; l += 0.1 )
+      for( double l = 0.01; l < 0.5; l += 0.05 )
 	{
-	  int L = l/0.1 - 1;
+	  int L = l/0.05;
 	  hyperparam(0,1) = l;
 	  for( double n = 0.1; n < 0.5; n += 0.5)
 	    {
@@ -302,8 +308,7 @@ int main(int argc, char* argv[]){
 
   Eigen::MatrixXf::Index maxRow, maxCol;
   float max = logprob.maxCoeff(&maxRow, &maxCol);
-  printf("%f %f %f\n",max,0.1+0.2*(double)maxRow,0.1+ 0.1*(double)maxCol);
-
+  printf("%f %f %f\n",max,10+5*(double)maxRow,0.01+ 0.05*(double)maxCol);
 
 
   /*
@@ -328,6 +333,6 @@ int main(int argc, char* argv[]){
   Eigen::MatrixXd trace = History.block(0,0,Samples,parameters);
   WriteCSVFile("mcmctrace_50.csv",paramNames,trace,",");
   */
-
+  }
   return 0;
 }

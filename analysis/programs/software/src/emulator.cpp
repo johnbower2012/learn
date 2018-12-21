@@ -214,12 +214,13 @@ double emulator::Emulate_NR(Eigen::MatrixXd testX, Eigen::MatrixXd Y, Eigen::Mat
     meanMatrix = KernelS.transpose()*this->KernelInv[ob]*Y.col(ob);
     double lg = 0.0;
     if(this->printVariance==true){
+      L = this->Kernel[ob].llt().matrixL();
       varMatrix = KernelSS - KernelS.transpose()*this->KernelInv[ob]*KernelS;
-      L = varMatrix.llt().matrixL();
       outMatrix.col(ob*2) = meanMatrix.col(0);
-      outMatrix.col(ob*2+1) = L.diagonal();
-      lg = -0.5*Y.col(ob).transpose()*KernelInv[ob]*Y.col(ob) - 0.5*this->trainPoints*log(2.0*3.1412);
-      for(int i = 0; i < testPoints; i++){
+      outMatrix.col(ob*2+1) = varMatrix.diagonal();
+      lg = -0.5*Y.col(ob).transpose()*KernelInv[ob]*Y.col(ob);
+      lg -= 0.5*this->trainPoints*log(2.0*3.1412);
+      for(int i = 0; i < trainPoints; i++){
 	lg += -0.5*log(L(i,i));
       }
     }else{
