@@ -1,5 +1,24 @@
 #include "analysis.h"
 
+void RemoveRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove){
+  unsigned int numRows = matrix.rows()-1;
+  unsigned int numCols = matrix.cols();
+
+  if( rowToRemove < numRows )
+    matrix.block(rowToRemove,0,numRows-rowToRemove,numCols) = matrix.block(rowToRemove+1,0,numRows-rowToRemove,numCols);
+
+  matrix.conservativeResize(numRows,numCols);
+}
+
+void RemoveColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove){
+  unsigned int numRows = matrix.rows();
+  unsigned int numCols = matrix.cols()-1;
+
+  if( colToRemove < numCols )
+    matrix.block(0,colToRemove,numRows,numCols-colToRemove) = matrix.block(0,colToRemove+1,numRows,numCols-colToRemove);
+
+  matrix.conservativeResize(numRows,numCols);
+}
 void AverageColumns(Eigen::VectorXd &average, Eigen::MatrixXd matrix){
   int rows = matrix.rows(),
     cols = matrix.cols();
@@ -10,6 +29,82 @@ void AverageColumns(Eigen::VectorXd &average, Eigen::MatrixXd matrix){
     }
     average(col) /= rows;
   }
+}
+void AddOnesRow(Eigen::MatrixXd matrix, Eigen::MatrixXd &outMatrix){
+  int rows = matrix.rows(),
+    cols = matrix.cols();
+  outMatrix = Eigen::MatrixXd::Zero(rows+1,cols);
+  for(int col=0;col<cols;col++){
+    outMatrix(0,col) = 1.0;
+    for(int row=0;row<rows;row++){
+      outMatrix(row+1,col) = matrix(row,col);
+    }
+  }
+}
+void AddOnesColumn(Eigen::MatrixXd matrix, Eigen::MatrixXd &outMatrix){
+  int rows = matrix.rows(),
+    cols = matrix.cols();
+  outMatrix = Eigen::MatrixXd::Zero(rows,cols+1);
+  for(int row=0;row<rows;row++){
+    outMatrix(row,0) = 1.0;
+    for(int col=0;col<cols;col++){
+      outMatrix(row,col+1) = matrix(row,col);
+    }
+  }
+}
+
+
+void ScaleMatrixColumns(Eigen::MatrixXd Matrix,Eigen::VectorXd &Mean, Eigen::VectorXd &Std, Eigen::MatrixXd &Scaled)
+{
+  int rows = Matrix.rows(),
+    cols = Matrix.cols();
+  Mean = Eigen::VectorXd::Zero(cols);
+  Std = Eigen::VectorXd::Zero(cols);
+  Scaled = Eigen::MatrixXd::Zero(rows,cols);
+  for(int col=0;col<cols;col++)
+    {
+      for(int row=0;row<rows;row++)
+	{
+	  Mean(col) += Matrix(row,col);
+	}
+      Mean(col) /= (double) rows;
+      for(int row=0;row<rows;row++)
+	{
+	  Std(col) += (Matrix(row,col) - Mean(col))*(Matrix(row,col) - Mean(col));
+	}
+      Std(col) /= (double)rows;
+      Std(col) = sqrt(Std(col));
+      for(int row=0;row<rows;row++)
+	{
+	  Scaled(row,col) = (Matrix(row,col) - Mean(col))/Std(col);
+	}
+    }
+}
+void ScaleMatrixRows(Eigen::MatrixXd Matrix,Eigen::VectorXd &Mean, Eigen::VectorXd &Std, Eigen::MatrixXd &Scaled)
+{
+  int rows = Matrix.rows(),
+    cols = Matrix.cols();
+  Mean = Eigen::VectorXd::Zero(rows);
+  Std = Eigen::VectorXd::Zero(rows);
+  Scaled = Eigen::MatrixXd::Zero(rows,cols);
+  for(int row=0;row<rows;row++)
+    {
+      for(int col=0;col<cols;col++)
+	{
+	  Mean(row) += Matrix(row,col);
+	}
+      Mean(row) /= (double) cols;
+      for(int col=0;col<cols;col++)
+	{
+	  Std(row) += (Matrix(row,col) - Mean(row))*(Matrix(row,col) - Mean(row));
+	}
+      Std(row) /= (double)cols;
+      Std(row) = sqrt(Std(row));
+      for(int col=0;col<cols;col++)
+	{
+	  Scaled(row,col) = (Matrix(row,col) - Mean(row))/Std(row);
+	}
+    }
 }
 void AverageRows(Eigen::VectorXd &average, Eigen::MatrixXd matrix){
   int rows = matrix.rows(),
@@ -190,36 +285,36 @@ void linearRegressionLeastSquares(Eigen::MatrixXd Y, Eigen::MatrixXd X, Eigen::M
   int points = Y.rows();
   int parameters = X.cols();
   int observables = Y.cols();
-  Beta = Eigen::MatrixXd::Zero(observables,parameters); 
+  Beta = Eigen::MatrixXd::Zero(observables,parameters+1); 
 
-  Eigen::MatrixXd temp = Eigen::MatrixXd::Zero(points,2);
+  Eigen::MatrixXd temp = Eigen::MatrixXd::Zero(parameters+1,parameters+1),
+    X_;
+  AddOnesColumn(X,X_);
   Eigen::VectorXd beta = Eigen::VectorXd::Zero(parameters);
   Eigen::VectorXd y = Eigen::VectorXd::Zero(points);
 
-  temp = X.transpose()*X;
+  temp = X_.transpose()*X_;
   temp = temp.inverse();
   for(int j=0;j<observables;j++){
     y = Y.col(j);
-    beta = temp*X.transpose()*y;
+    beta = temp*X_.transpose()*y;
     Beta.row(j) = beta;
   }
 }
-void removeRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove){
-  unsigned int numRows = matrix.rows()-1;
-  unsigned int numCols = matrix.cols();
+void ComputeFit(Eigen::MatrixXd ModelZ, Eigen::MatrixXd EmulatorZ, Eigen::MatrixXd &outMatrix){
+  int samples = ModelZ.rows(),
+    obs = ModelZ.cols();
 
-  if( rowToRemove < numRows )
-    matrix.block(rowToRemove,0,numRows-rowToRemove,numCols) = matrix.block(rowToRemove+1,0,numRows-rowToRemove,numCols);
+  outMatrix = Eigen::MatrixXd::Zero(samples,obs+1);
 
-  matrix.conservativeResize(numRows,numCols);
+  double sum = 0.0;
+  for(int i=0;i<samples;i++){
+    sum = 0.0;
+    for(int j=0;j<obs;j++){
+      outMatrix(i,j+1) = ModelZ(i,j) - EmulatorZ(i,j);
+      sum += outMatrix(i,j+1)*outMatrix(i,j+1);
+    }
+    outMatrix(i,0) = -0.5*sum;
+  }
 }
-
-void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove){
-  unsigned int numRows = matrix.rows();
-  unsigned int numCols = matrix.cols()-1;
-
-  if( colToRemove < numCols )
-    matrix.block(0,colToRemove,numRows,numCols-colToRemove) = matrix.block(0,colToRemove+1,numRows,numCols-colToRemove);
-
-  matrix.conservativeResize(numRows,numCols);
-}
+  

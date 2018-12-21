@@ -10,7 +10,8 @@ MCMC::MCMC(){
 
   this->setSeed(1);
 }
-MCMC::MCMC(Eigen::MatrixXd newTargetValue, Eigen::MatrixXd newRange, Eigen::VectorXd newWidths){
+MCMC::MCMC(Eigen::MatrixXd newTargetValue, Eigen::MatrixXd newRange, Eigen::VectorXd newWidths, bool nR){
+  this->NR = nR;
   this->maxLogLikelihood = -std::numeric_limits<double>::infinity();
   this->Likelihood = maxLogLikelihood;
   this->setSeed(1);
@@ -122,7 +123,11 @@ void MCMC::Run(int Samples, Eigen::MatrixXd &History, emulator obsEmulator, Eige
 
   for(int step=0;step<Samples;step++){
     this->step();
-    obsEmulator.Emulate_NR(this->testPosition,Y,testValue);
+    if(this->NR==true){
+      obsEmulator.Emulate_NR(this->testPosition,Y,testValue);
+    }else{
+      obsEmulator.Emulate(this->testPosition,Y,testValue);
+    }      
     takeStep = this->decide(testValue);
     History.block(step,0,1,this->paramCount) = this->Position;
     History.block(step,this->paramCount,1,this->obsCount) = testValue;
@@ -139,3 +144,8 @@ void MCMC::Run(int Samples, Eigen::MatrixXd &History, emulator obsEmulator, Eige
   printf("Percent Acceptance: %f%%...\n",acceptedSteps);
   printf("MaxLLH: %f...\n",this->maxLogLikelihood);
 }
+    
+
+    
+  
+  

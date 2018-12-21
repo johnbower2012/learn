@@ -1,0 +1,1 @@
+unset key; set view map; set dgrid3d; set contour; set cntrparam levels incr -1600,100,200; set grid; set xlabel "r"; set ylabel "l"; splot "log.dat" u 1:2:4 w pm3d

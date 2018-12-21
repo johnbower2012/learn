@@ -5,6 +5,14 @@
 #include<vector>
 #include<iostream>
 
+void RemoveRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove);
+void RemoveColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove);
+void AddOnesRow(Eigen::MatrixXd matrix, Eigen::MatrixXd &outMatrix);
+void AddOnesColumn(Eigen::MatrixXd matrix, Eigen::MatrixXd &outMatrix);
+
+void ScaleMatrixColumns(Eigen::MatrixXd Matrix,Eigen::VectorXd &Mean, Eigen::VectorXd &Std, Eigen::MatrixXd &Scaled);
+void ScaleMatrixRows(Eigen::MatrixXd Matrix,Eigen::VectorXd &Mean, Eigen::VectorXd &Stdd, Eigen::MatrixXd &Scaled);
+
 void AverageColumns(Eigen::VectorXd &average, Eigen::MatrixXd matrix);
 void AverageRows(Eigen::VectorXd &average, Eigen::MatrixXd matrix);
 void TildeFunction(Eigen::MatrixXd &tilde, Eigen::VectorXd mean, Eigen::VectorXd error, Eigen::MatrixXd matrix);
@@ -19,9 +27,6 @@ void FirstMoment(Eigen::MatrixXd Function, double &Moment);
 void SecondMoment(Eigen::MatrixXd Function, double &Moment);
 void MatrixMoments(std::vector<Eigen::MatrixXd> Matrix, Eigen::VectorXd DelX, Eigen::MatrixXd &Obs);
 void linearRegressionLeastSquares(Eigen::MatrixXd Y, Eigen::MatrixXd X, Eigen::MatrixXd &Beta);
-
-void removeRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove);
-void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove);
+void ComputeFit(Eigen::MatrixXd ModelZ, Eigen::MatrixXd EmulatorZ, Eigen::MatrixXd &outMatrix);
 
 #endif
-

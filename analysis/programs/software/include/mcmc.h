@@ -25,8 +25,9 @@ class MCMC{
   std::normal_distribution<double> normal_dist;
   std::uniform_real_distribution<double> uniform_dist;
 
+  bool NR;
   MCMC();
-  MCMC(Eigen::MatrixXd newTargetValue, Eigen::MatrixXd newRange, Eigen::VectorXd newWidths);
+  MCMC(Eigen::MatrixXd newTargetValue, Eigen::MatrixXd newRange, Eigen::VectorXd newWidths, bool NR);
 
   void setTargetValue(Eigen::MatrixXd newTargetValue);
   void setRange(Eigen::MatrixXd newRange);
